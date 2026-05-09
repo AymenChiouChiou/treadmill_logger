@@ -94,6 +94,12 @@ class FTMSClient:
 
                 print(f"Samples recorded : {len(self.buffer.get_samples())}")
 
+                self.buffer.trim_after_timestamp(
+                    self.detector.session_end_time
+                )
+
+                print(f"Samples recorded : {len(self.buffer.get_samples())}")
+
                 # Debug first samples
                 for s in self.buffer.get_samples()[:5]:
                     print(s)
