@@ -50,19 +50,27 @@ class FTMSClient:
 
     async def start_notifications(self):
 
+        print("Starting notify...")
+
         def notification_handler(sender, data):
+            print("NOTIFICATION RECEIVED")
 
             parsed = parse_treadmill_data(data)
 
             print(parsed)
+            # =========================
+            # GET SPEED
+            # =========================
 
             speed = parsed.get("speed_kmh", 0)
 
-            event = self.detector.update(speed)
+            print(f"Speed = {speed}")
 
             # =========================
-            # STORE SAMPLE
+            # UPDATE WORKOUT DETECTOR
             # =========================
+
+            event = self.detector.update(speed)
 
             if self.detector.is_running:
                 sample = Sample(
@@ -74,19 +82,30 @@ class FTMSClient:
 
                 self.buffer.add_sample(sample)
 
+                print(f"Samples count = {len(self.buffer.get_samples())}")
+
             # =========================
             # WORKOUT FINISHED
             # =========================
 
             if event == "finished":
 
+                print("\n=== WORKOUT FINISHED ===\n")
+
                 print(f"Samples recorded : {len(self.buffer.get_samples())}")
 
-                # temporary debug
+                # Debug first samples
                 for s in self.buffer.get_samples()[:5]:
                     print(s)
 
                 print("TODO: save Garmin FIT file")
+
+        await self.client.start_notify(
+            TREADMILL_DATA_UUID,
+            notification_handler
+        )
+
+        print("Notify started successfully")
 
         print("Listening treadmill notifications...\n")
 
