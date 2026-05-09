@@ -1,4 +1,5 @@
 from bleak import BleakScanner
+from bleak.backends.scanner import AdvertisementData
 
 FTMS_UUID = "00001826-0000-1000-8000-00805f9b34fb"
 
@@ -7,21 +8,29 @@ async def scan_ftms_devices():
 
     print("Scanning BLE FTMS devices...\n")
 
-    devices = await BleakScanner.discover(timeout=5.0)
-
     ftms_devices = []
 
-    for d in devices:
+    # discover() with return_adv=True gives us AdvertisementData
+    # which has service_uuids -- works on bleak 0.19+
+    devices_and_adv = await BleakScanner.discover(
+        timeout=5.0,
+        return_adv=True,
+    )
 
-        uuids = d.metadata.get("uuids", [])
+    for address, (device, adv) in devices_and_adv.items():
 
-        if uuids and FTMS_UUID.lower() in [u.lower() for u in uuids]:
+        uuids = [u.lower() for u in (adv.service_uuids or [])]
 
-            ftms_devices.append(d)
+        if FTMS_UUID.lower() in uuids:
+
+            ftms_devices.append(device)
 
             print("FTMS device found:")
-            print(f"Name    : {d.name}")
-            print(f"Address : {d.address}")
+            print(f"Name    : {device.name}")
+            print(f"Address : {device.address}")
             print()
+
+    if not ftms_devices:
+        print("No FTMS treadmill found.")
 
     return ftms_devices

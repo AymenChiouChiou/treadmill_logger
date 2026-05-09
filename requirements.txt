@@ -1,1 +1,2 @@
-bleak
+bleak>=0.21.0
+garminconnect>=0.2.19
